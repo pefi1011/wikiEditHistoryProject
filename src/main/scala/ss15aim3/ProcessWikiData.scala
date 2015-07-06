@@ -55,15 +55,22 @@ object ProcessWikiData {
       // remove duplicate categories for user
       .distinct(0, 1)
 
+    // Use that if you need all categories of user
+    /*
     val allCategoriesForUser = userCategoryTuples
       // Group by user
       .groupBy(0)
       .reduce((t1, t2) => (t1._1, t1._2 + " " + t2._2))
+    */
 
     // We don't need to write that
     //allCategoriesForUser.writeAsText(outputFilePath + "/categoriesPerEditor", WriteMode.OVERWRITE)
 
-    val countCategoriesPerEditor = userCategoryTuples.map(userWithCategory => (userWithCategory._1, 1)).groupBy(0).sum(1)
+    val countCategoriesPerEditor = userCategoryTuples
+      .map(userWithCategory => (userWithCategory._1, 1))
+      .groupBy(0)
+      .sum(1)
+
     val countAuthors = countCategoriesPerEditor.map(t => 1).reduce(_ + _)
 
     val partAuthorsWith3orLessCtgs = countCategoriesPerEditor
@@ -77,7 +84,7 @@ object ProcessWikiData {
       .map(t => (t._1.toDouble / t._2, 1 - (t._1.toDouble / t._2)))
 
 
-      .writeAsText(outputFilePath + "/editUsersByCategory", WriteMode.OVERWRITE)
+    partAuthorsWith3orLessCtgs.writeAsText(outputFilePath + "/editUsersByCategory", WriteMode.OVERWRITE)
 
 
 
@@ -106,9 +113,9 @@ object ProcessWikiData {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////// DOCID PART //////////////////////////////////////////////////
 
-    val editsByDocIdNotSorted = editsFirstLineNoAnonym
-      // get all docids
-      .map(t => (t.split(" ")(1), 1))
+    val editsByDocIdNotSorted = editsFirstLine //NoAnonym
+      // get all doc titles
+      .map(t => (t.split(" ")(3), 1))
       .groupBy(0)
       .reduce((t1, t2) => (t1._1, t1._2 + t2._2))
 
