@@ -75,7 +75,8 @@ object ProcessWikiData {
       // calculate result
       .map(t => (t._1.toDouble / t._2, 1 - (t._1.toDouble / t._2)))
 
-    partAuthorsWith3orLessCtgs.writeAsText(outputFilePath + "/editUsersByCategory", WriteMode.OVERWRITE)
+
+      .writeAsText(outputFilePath + "/editUsersByCategory", WriteMode.OVERWRITE)
 
 
 
@@ -91,7 +92,8 @@ object ProcessWikiData {
       .setParallelism(1)
       .first(10)
 
-    writeInCsv(categories, outputFilePath + "/editFileFrequencyPart2")
+   // writeInCsv(categories, outputFilePath + "/editFileFrequencyPart2")
+    categories.writeAsText(outputFilePath + "/editFileFrequencyPart2", WriteMode.OVERWRITE)
 
     //////////////////////////////////////////// END CATEGORIES ///////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -114,7 +116,8 @@ object ProcessWikiData {
       .setParallelism(1)
     //.first(10)
 
-    writeInCsv(editsByDocId, outputFilePath + "/editFileFrequency")
+    //writeInCsv(editsByDocId, outputFilePath + "/editFileFrequency")
+    editsByDocId.writeAsText(outputFilePath + "/editFileFrequency", WriteMode.OVERWRITE)
 
     ///////////////////////////// END DOCID PART ///////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////
