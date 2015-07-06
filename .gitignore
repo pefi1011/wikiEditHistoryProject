@@ -15,3 +15,5 @@ hs_err_pid*
 
 /target
 .idea/
+/output/*
+!/output/USE_THIS_PATH_FOR_OUTPUT.txt
