@@ -17,3 +17,5 @@ hs_err_pid*
 .idea/
 /output/*
 !/output/USE_THIS_PATH_FOR_OUTPUT.txt
+/clusterResults/*
+!/clusterResults/USE_THIS_PATH_DOWNLOADING_FROM_CLUSTER.txt
