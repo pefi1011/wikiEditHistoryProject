@@ -60,7 +60,8 @@ object ProcessWikiData {
       .groupBy(0)
       .reduce((t1, t2) => (t1._1, t1._2 + " " + t2._2))
 
-    allCategoriesForUser.writeAsText(outputFilePath + "/categoriesPerEditor", WriteMode.OVERWRITE)
+    // We don't need to write that
+    //allCategoriesForUser.writeAsText(outputFilePath + "/categoriesPerEditor", WriteMode.OVERWRITE)
 
     val countCategoriesPerEditor = userCategoryTuples.map(userWithCategory => (userWithCategory._1, 1)).groupBy(0).sum(1)
     val countAuthors = countCategoriesPerEditor.map(t => 1).reduce(_ + _)
@@ -164,7 +165,7 @@ object ProcessWikiData {
       .map(in => (2015, in._1.toDouble / in._2, 1 - (in._1.toDouble / in._2)))
 
     percentageAnonymous.writeAsCsv(outputFilePath + "/editionByAnonyms", csvRowDelimeter, csvFieldDelimeter, WriteMode.OVERWRITE)
-    countsEditsPerUser.writeAsText(outputFilePath + "/editsPerUser", WriteMode.OVERWRITE)
+    //countsEditsPerUser.writeAsText(outputFilePath + "/editsPerUser", WriteMode.OVERWRITE)
 
 
     val countPerUserGroup = calculateUserGroups(countsEditsPerUser)
@@ -174,7 +175,6 @@ object ProcessWikiData {
       .map(t => (2015, t._1._1, t._1._2, t._1._3, t._1._4, t._1._5, t._1._6, t._1._7, t._2))
 
     outputCountPerUserGroupAndAvg.writeAsCsv(outputFilePath + "/editsUsersByDocCount", csvRowDelimeter, csvFieldDelimeter, WriteMode.OVERWRITE)
-    avgEditsCountPerUser.writeAsText(outputFilePath + "/avgEditPerUser", WriteMode.OVERWRITE)
 
     env.execute("Scala AssociationRule Example")
   }
@@ -230,7 +230,6 @@ object ProcessWikiData {
         }
       }
     })
-
   }
 
 
