@@ -23,8 +23,14 @@ object ProcessWikiData {
   private var inputFilePath: String = ""
   private var outputFilePath: String = ""
 
-  private val csvRowDelimeter = "\n"
-  private val emptyLine = "\n\n"
+  // Get platform independent new line
+  private val platfIndepNewLine = System.getProperty("line.separator")
+
+  private val csvRowDelimeter = platfIndepNewLine
+  private val newLine = platfIndepNewLine
+  private val emptyLine = newLine+newLine
+
+
   private val csvFieldDelimeter = ";"
 
   def main(args: Array[String]) {
@@ -41,14 +47,14 @@ object ProcessWikiData {
 
     val env = ExecutionEnvironment.getExecutionEnvironment
 
-    val edits = env.readFileOfPrimitives[String](inputFilePath, "\n\n")
+    val edits = env.readFileOfPrimitives[String](inputFilePath, emptyLine)
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////// CATEGORIES PART ////////////////////////////////////////////
 
     // Assure the data has the right format (WRITE ABOUT THAT IN PAPER)
-    val editsBadDataCleared = edits.filter(_.split("\n")(0).split(" ").length > 5)
+    val editsBadDataCleared = edits.filter(_.split(platfIndepNewLine)(0).split(" ").length > 5)
 
     //
     val userCategoryTuples = createUserCategoryTuples(editsBadDataCleared)
@@ -71,7 +77,7 @@ object ProcessWikiData {
       .groupBy(0)
       .sum(1)
 
-    val countAuthors = countCategoriesPerEditor.map(t => 1).reduce(_ + _)
+    val countAuthors = countCategoriesPerEditor.map(t => 1).reduce(_+_)
 
     val partAuthorsWith3orLessCtgs = countCategoriesPerEditor
       // get authors with 3 or less categories
@@ -106,7 +112,7 @@ object ProcessWikiData {
     //////////////////////////////////////////// END CATEGORIES ///////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    val editsFirstLine = editsBadDataCleared.map(t => t.split("\n")(0))
+    val editsFirstLine = editsBadDataCleared.map(t => t.split(platfIndepNewLine)(0))
     val editsFirstLineNoAnonym = editsFirstLine.filter(!_.split(" ")(5).startsWith("ip:"))
 
 
@@ -148,7 +154,7 @@ object ProcessWikiData {
       .map(edit => (edit, 1)).groupBy(0)
       .reduce((t1, t2) => (t1._1, t1._2 + t2._2))
 
-    val countUsers = countsEditsPerUser.map(_ => 1).reduce(_ + _)
+    val countUsers = countsEditsPerUser.map(_ => 1).reduce(_+_)
 
     val sumEditsByUser = countsEditsPerUser
       .map(edit => edit._2)
@@ -205,7 +211,7 @@ object ProcessWikiData {
     }
 
     val pw = new PrintWriter(new File(pfad))
-    pw.write(names.dropRight(1) + "\n")
+    pw.write(names.dropRight(1) + platfIndepNewLine)
     pw.write(counts.dropRight(1))
     pw.close()
   }
@@ -218,7 +224,7 @@ object ProcessWikiData {
       def flatMap(in: String, out: Collector[(String, String)]) = {
 
         // get the single rows of the data
-        val rows = in.split("\n")
+        val rows = in.split(platfIndepNewLine)
 
         // get the author of the edit which is in the first row on the 6th position
         val editor = rows(0).split(" ")(5)
