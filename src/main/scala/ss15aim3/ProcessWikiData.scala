@@ -64,13 +64,15 @@ object ProcessWikiData {
     val countsEditsPerUser = authors
       // Filter the anonymous users
       .filter(!_.startsWith("ip:"))
+      .filter(!_.contains("Bot"))
+      .filter(!_.contains("bot"))
       .map(edit => (edit, 1)).groupBy(0)
       .reduce((t1, t2) => (t1._1, t1._2 + t2._2))
 
     val top10Users = countsEditsPerUser
       .sortPartition(1, Order.DESCENDING)
       .setParallelism(1)
-      .first(20)
+      .first(10)
 
     generateDataByDate(editsFirstLineNoAnonym, top10Users)
 
