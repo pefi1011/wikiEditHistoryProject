@@ -103,7 +103,7 @@ object ProcessWikiData {
     val categories = categoriesNotSorted
       .sortPartition(1, Order.DESCENDING)
       .setParallelism(1)
-      .first(10)
+      .first(100)
 
    // writeInCsv(categories, outputFilePath + "/editFileFrequencyPart2")
     categories.writeAsText(outputFilePath + "/editFileFrequencyPart2", WriteMode.OVERWRITE)
@@ -127,7 +127,7 @@ object ProcessWikiData {
     val editsByDocId = editsByDocIdNotSorted
       .sortPartition(1, Order.DESCENDING)
       .setParallelism(1)
-    //.first(10)
+      .first(100)
 
     //writeInCsv(editsByDocId, outputFilePath + "/editFileFrequency")
     editsByDocId.writeAsText(outputFilePath + "/editFileFrequency", WriteMode.OVERWRITE)
