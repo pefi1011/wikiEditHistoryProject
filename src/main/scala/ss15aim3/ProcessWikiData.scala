@@ -56,7 +56,6 @@ object ProcessWikiData {
     // Assure the data has the right format (WRITE ABOUT THAT IN PAPER)
     val editsBadDataCleared = edits.filter(_.split(platfIndepNewLine)(0).split(" ").length > 5)
 
-    //
     val userCategoryTuples = createUserCategoryTuples(editsBadDataCleared)
       // remove duplicate categories for user
       .distinct(0, 1)
@@ -180,6 +179,13 @@ object ProcessWikiData {
       .filter(!_.startsWith("ip:"))
       .map(edit => (edit, 1)).groupBy(0)
       .reduce((t1, t2) => (t1._1, t1._2 + t2._2))
+
+    val top10Users = countsEditsPerUser
+      .sortPartition(1, Order.DESCENDING)
+      .setParallelism(1)
+      .first(10)
+
+    top10Users.writeAsText(outputFilePath + "/top10UsersByCount", WriteMode.OVERWRITE)
 
     val countUsers = countsEditsPerUser.map(_ => 1).reduce(_+_)
 
