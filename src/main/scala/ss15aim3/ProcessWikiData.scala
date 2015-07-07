@@ -103,10 +103,9 @@ object ProcessWikiData {
     val categories = categoriesNotSorted
       .sortPartition(1, Order.DESCENDING)
       .setParallelism(1)
-      .first(100)
+      .first(20)
 
-   // writeInCsv(categories, outputFilePath + "/editFileFrequencyPart2")
-    categories.writeAsText(outputFilePath + "/editFileFrequencyPart2", WriteMode.OVERWRITE)
+    categories.writeAsText(outputFilePath + "/editFileFrequencyPart3", WriteMode.OVERWRITE)
 
     //////////////////////////////////////////// END CATEGORIES ///////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -127,10 +126,39 @@ object ProcessWikiData {
     val editsByDocId = editsByDocIdNotSorted
       .sortPartition(1, Order.DESCENDING)
       .setParallelism(1)
-      .first(100)
+      .first(20)
 
-    //writeInCsv(editsByDocId, outputFilePath + "/editFileFrequency")
     editsByDocId.writeAsText(outputFilePath + "/editFileFrequency", WriteMode.OVERWRITE)
+
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    val docsWithCategories = editsBadDataCleared.map( new MapFunction[String, (String, List[String])] {
+      override def map(t: String): (String, List[String]) = {
+        val infos = t.split(newLine)
+
+        val docName = infos(0).split(" ")(3)
+        val categories : List[String] = infos(1).replace("CATEGORY", "").split(" ").toList
+
+        (docName, categories)
+      }
+    })
+    .groupBy(0)
+    .reduce( (t1, t2) => (t1._1, (t1._2 ++ t2._2).distinct))
+
+    val catsOfFirst20Docs = docsWithCategories
+      .joinWithTiny(editsByDocId)
+      .where(0)
+      .equalTo(0)
+      .map(t => (t._1._1, t._1._2))
+
+    val countCatsOfTop20Docs = catsOfFirst20Docs.flatMap(_._2)
+      .map(t => (t , 1))
+      .groupBy(0)
+      .sum(1)
+
+    countCatsOfTop20Docs.writeAsText(outputFilePath + "/editFileFrequencyPart2", WriteMode.OVERWRITE)
+    //////////////////////////////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////// END DOCID PART ///////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////
@@ -183,7 +211,7 @@ object ProcessWikiData {
     val top10Users = countsEditsPerUser
       .sortPartition(1, Order.DESCENDING)
       .setParallelism(1)
-      .first(10)
+      .first(20)
 
     top10Users.writeAsText(outputFilePath + "/top10UsersByCount", WriteMode.OVERWRITE)
 
