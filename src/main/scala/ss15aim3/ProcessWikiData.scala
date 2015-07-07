@@ -168,9 +168,6 @@ object ProcessWikiData {
     ///////////////////////////// START TIMESTAMP PART /////////////////////////////////////
 
 
-    // TODO join with categories or just use data samehow
-    val toJoin = categories
-
      val editsByCategoryType = editsBadDataCleared.
        // get only data which contains "politic" in categories
        filter(_.split(newLine)(1).contains("politic"))
@@ -258,13 +255,6 @@ object ProcessWikiData {
     env.execute("Scala AssociationRule Example")
   }
 
-  private def parseText(textInput: DataSet[String]) = {
-
-    textInput.flatMap { input =>
-      input.split(emptyLine)
-    }
-  }
-
   def writeInCsv(tuples: DataSet[(String, Int)], pfad: String)() = {
     var names: String = "YEAR;"
     for (tuple <- tuples.collect()) {
@@ -345,20 +335,6 @@ object ProcessWikiData {
       .reduce((t1, t2) => (t1._1 + t2._1, t1._2 + t2._2, t1._3 + t2._3, t1._4 + t2._4, t1._5 + t2._5, t1._6 + t2._6, t1._7 + t2._7))
 
     countPerUserGroup
-
-  }
-
-  private def getTextDataSet(env: ExecutionEnvironment): DataSet[String] = {
-
-    if (fileInput) {
-      println("From File")
-      env.readTextFile(inputFilePath)
-    }
-
-    else {
-      println("From Code")
-      env.fromCollection(RecommendationData.ITEMS)
-    }
   }
 
   def generateDataByDate(editsFirstLine: DataSet[String], top10User: DataSet[(String, Int)]) = {
