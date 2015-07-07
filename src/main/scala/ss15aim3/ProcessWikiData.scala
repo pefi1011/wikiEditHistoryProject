@@ -102,7 +102,12 @@ object ProcessWikiData {
       .groupBy(0)
       .sum(1)
 
-    countCatsOfTop20Docs.writeAsText(outputFilePath + "/editFileFrequencyPart2", WriteMode.OVERWRITE)
+    val countCatsOfTop20DocsSorted = countCatsOfTop20Docs
+      .setParallelism(1)
+      .sortPartition(1, Order.DESCENDING)
+
+
+    countCatsOfTop20DocsSorted.writeAsText(outputFilePath + "/editFileFrequencyPart2", WriteMode.OVERWRITE)
     //////////////////////////////////////////////////////////////////////////////////////////////////////
 
     env.execute("Scala AssociationRule Example")
