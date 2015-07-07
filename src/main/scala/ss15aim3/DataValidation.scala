@@ -13,9 +13,10 @@ object DataValidation {
       sys.error("toBeComparedDataPath and toBeValidatedPath and validationResultsPath console parameters are missing")
       sys.exit(1)
     }
-    var toBeComparedDataPath = args(0) // /home/vassil/workspace/wikiEditHistoryProject/input/validationDataFileEdits.csv"
-    var toBeValidatedPath = args(1) // "/home/vassil/workspace/wikiEditHistoryProject/output/editFileFrequency"
-    var validationResultsPath = args(2) // /home/vassil/workspace/wikiEditHistoryProject/output/validationResults/
+
+    var toBeComparedDataPath = args(0)
+    var toBeValidatedPath = args(1)
+    var validationResultsPath = args(2)
     println("toBeComparedDataPath: " + toBeComparedDataPath)
     println("toBeValidatedPath: " + toBeValidatedPath)
     println("validationResultsPath: " + validationResultsPath)
