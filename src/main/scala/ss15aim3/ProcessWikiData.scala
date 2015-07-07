@@ -49,151 +49,14 @@ object ProcessWikiData {
 
     val edits = env.readFileOfPrimitives[String](inputFilePath, emptyLine)
 
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////// CATEGORIES PART ////////////////////////////////////////////
-
     // Assure the data has the right format (WRITE ABOUT THAT IN PAPER)
     val editsBadDataCleared = edits.filter(_.split(platfIndepNewLine)(0).split(" ").length > 5)
-
-    val userCategoryTuples = createUserCategoryTuples(editsBadDataCleared)
-      // remove duplicate categories for user
-      .distinct(0, 1)
-
-    // Use that if you need all categories of user
-    /*
-    val allCategoriesForUser = userCategoryTuples
-      // Group by user
-      .groupBy(0)
-      .reduce((t1, t2) => (t1._1, t1._2 + " " + t2._2))
-    */
 
     // We don't need to write that
     //allCategoriesForUser.writeAsText(outputFilePath + "/categoriesPerEditor", WriteMode.OVERWRITE)
 
-    val countCategoriesPerEditor = userCategoryTuples
-      .map(userWithCategory => (userWithCategory._1, 1))
-      .groupBy(0)
-      .sum(1)
-
-    val countAuthors = countCategoriesPerEditor.map(t => 1).reduce(_+_)
-
-    val partAuthorsWith3orLessCtgs = countCategoriesPerEditor
-      // get authors with 3 or less categories
-      .filter(_._2 <= 3)
-      // count them
-      .map(t => 1).reduce(_ + _)
-      // cross with authors count
-      .crossWithTiny(countAuthors)
-      // calculate result
-      .map(t => (t._1.toDouble / t._2, 1 - (t._1.toDouble / t._2)))
-
-
-    partAuthorsWith3orLessCtgs.writeAsText(outputFilePath + "/editUsersByCategory", WriteMode.OVERWRITE)
-
-
-
-    val categoriesNotSorted = userCategoryTuples
-      // get only the categories
-      .map(t => (t._2, 1))
-      // group by categories
-      .groupBy(0)
-      .reduce((t1, t2) => (t1._1, t1._2 + t2._2))
-
-    val categories = categoriesNotSorted
-      .sortPartition(1, Order.DESCENDING)
-      .setParallelism(1)
-      .first(20)
-
-
-    //////////////////////////////////////////// END CATEGORIES ///////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     val editsFirstLine = editsBadDataCleared.map(t => t.split(platfIndepNewLine)(0))
     val editsFirstLineNoAnonym = editsFirstLine.filter(!_.split(" ")(5).startsWith("ip:"))
-
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////// DOCID PART //////////////////////////////////////////////////
-
-    val editsByDocIdNotSorted = editsFirstLine //NoAnonym
-      // get all doc titles
-      .map(t => (t.split(" ")(3), 1))
-      .groupBy(0)
-      .reduce((t1, t2) => (t1._1, t1._2 + t2._2))
-
-    val editsByDocId = editsByDocIdNotSorted
-      .sortPartition(1, Order.DESCENDING)
-      .setParallelism(1)
-      .first(20)
-
-
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    val docsWithCategories = editsBadDataCleared.map( new MapFunction[String, (String, List[String])] {
-      override def map(t: String): (String, List[String]) = {
-        val infos = t.split(newLine)
-
-        val docName = infos(0).split(" ")(3)
-        val categories : List[String] = infos(1).replace("CATEGORY", "").split(" ").toList
-
-        (docName, categories)
-      }
-    })
-      .groupBy(0)
-      .reduce( (t1, t2) => (t1._1, (t1._2 ++ t2._2).distinct))
-
-    val catsOfFirst20Docs = docsWithCategories
-      .joinWithTiny(editsByDocId)
-      .where(0)
-      .equalTo(0)
-      .map(t => (t._1._1, t._1._2))
-
-    val countCatsOfTop20Docs = catsOfFirst20Docs.flatMap(_._2)
-      .map(t => (t , 1))
-      .groupBy(0)
-      .sum(1)
-
-    categories.writeAsText(outputFilePath + "/editFileFrequencyPart3", WriteMode.OVERWRITE)
-    editsByDocId.writeAsText(outputFilePath + "/editFileFrequency", WriteMode.OVERWRITE)
-    countCatsOfTop20Docs.writeAsText(outputFilePath + "/editFileFrequencyPart2", WriteMode.OVERWRITE)
-    //////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    ///////////////////////////// END DOCID PART ///////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////
-    ///////////////////////////// START TIMESTAMP PART /////////////////////////////////////
-
-
-     val editsByCategoryType = editsBadDataCleared
-       // get only data which contains "politic" in categories
-       .filter(_.split(newLine)(1).contains("politic"))
-       .map(
-         new MapFunction[String, (String, Int)]() {
-
-           def map(in: String): (String, Int) = {
-
-             val firstLine = in.split(newLine)(0)
-             val timestamp = firstLine.split(" ")(4)
-             val timeIndex = timestamp.indexOf("T")
-
-             // Remove the hours minutes and seconds of the date
-             (timestamp.dropRight(timeIndex), 1)
-           }
-         }
-       )
-       .groupBy(0)
-       .sum(1)
-
-    editsByCategoryType.writeAsText(outputFilePath + "/categoryEditTime/politics", WriteMode.OVERWRITE)
-
-
-
-    ///////////////////////////// END TIMESTAMP PART ///////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////////////////
 
 
     val authors = editsFirstLine.map(t => t.split(" ")(5))
@@ -209,54 +72,7 @@ object ProcessWikiData {
       .setParallelism(1)
       .first(20)
 
-    //top10Users.writeAsText(outputFilePath + "/top10UsersByCount", WriteMode.OVERWRITE)
-
-    val countUsers = countsEditsPerUser.map(_ => 1).reduce(_+_)
-
-    val sumEditsByUser = countsEditsPerUser
-      .map(edit => edit._2)
-      .reduce(_ + _)
-
-    val avgEditsCountPerUser = countUsers
-      .crossWithTiny(sumEditsByUser)
-      // edits / countUsers
-      .map(in => in._2.toDouble / in._1)
-
-    val editsByAnonymous = authors
-      .filter(_.startsWith("ip:"))
-      // Get the count
-      .map(_ => 1).reduce(_ + _)
-
-    val editsTotal = authors
-      .map(_ => 1).reduce(_ + _)
-
-    val percentageAnonymous = editsByAnonymous
-      .cross(editsTotal)
-      .map(in => (2015, in._1.toDouble / in._2, 1 - (in._1.toDouble / in._2)))
-
-    //percentageAnonymous.writeAsCsv(outputFilePath + "/editionByAnonyms", csvRowDelimeter, csvFieldDelimeter, WriteMode.OVERWRITE)
-
-
-    //countsEditsPerUser.writeAsText(outputFilePath + "/editsPerUser", WriteMode.OVERWRITE)
-
-
-    val countPerUserGroup = calculateUserGroups(countsEditsPerUser)
-
-    val outputCountPerUserGroupAndAvg = countPerUserGroup
-      .crossWithTiny(avgEditsCountPerUser)
-      .map(t => (2015, t._1._1, t._1._2, t._1._3, t._1._4, t._1._5, t._1._6, t._1._7, t._2))
-
-    //outputCountPerUserGroupAndAvg.writeAsCsv(outputFilePath + "/editsUsersByDocCount", csvRowDelimeter, csvFieldDelimeter, WriteMode.OVERWRITE)
-
-    //////////////////////////////////////////////////////////////////////
-
     generateDataByDate(editsFirstLineNoAnonym, top10Users)
-
-
-    top10Users.writeAsText(outputFilePath + "/top10UsersByCount", WriteMode.OVERWRITE)
-    percentageAnonymous.writeAsCsv(outputFilePath + "/editionByAnonyms", csvRowDelimeter, csvFieldDelimeter, WriteMode.OVERWRITE)
-    outputCountPerUserGroupAndAvg.writeAsCsv(outputFilePath + "/editsUsersByDocCount", csvRowDelimeter, csvFieldDelimeter, WriteMode.OVERWRITE)
-    //////////////////////////////////////////////////////////////////////
 
     env.execute("Scala AssociationRule Example")
   }
@@ -361,7 +177,7 @@ object ProcessWikiData {
           }
         })
 
-
+    /*
     val countEditsByDate = userEditsByDate
       .map(t => (t._1, t._3))
       .groupBy(0)
@@ -369,7 +185,7 @@ object ProcessWikiData {
 
     countEditsByDate.writeAsCsv(outputFilePath + "/userEditTimeCount", csvRowDelimeter, csvFieldDelimeter, WriteMode.OVERWRITE)
 
-
+    */
     val countEditsByUserDate = userEditsByDate
       .join(top10User)
       .where(1)
