@@ -142,6 +142,30 @@ object ProcessWikiData {
 
     generateDataByDate(editsFirstLineNoAnonym)
 
+     val editsByCategoryType = editsBadDataCleared.
+       // get only data which contains "politic" in categories
+       filter(_.split(newLine)(1).contains("politic"))
+       .map(
+         new MapFunction[String, (String, Int)]() {
+
+           def map(in: String): (String, Int) = {
+
+             val firstLine = in.split(newLine)(0)
+             val timestamp = firstLine.split(" ")(4)
+             val timeIndex = timestamp.indexOf("T")
+
+             // Remove the hours minutes and seconds of the date
+             (timestamp.dropRight(timeIndex), 1)
+           }
+         }
+       )
+       .groupBy(0)
+       .sum(1)
+
+    editsByCategoryType.writeAsText(outputFilePath + "/categoryEditTime/politics", WriteMode.OVERWRITE)
+
+
+
     ///////////////////////////// END TIMESTAMP PART ///////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -296,6 +320,7 @@ object ProcessWikiData {
   }
 
   def generateDataByDate(editsFirstLine: DataSet[String]) = {
+
     val userEditsByDate = editsFirstLine
       // get all edit timestamps
       .map(
@@ -311,7 +336,6 @@ object ProcessWikiData {
             (timestamp.dropRight(timeIndex), user, 1)
           }
         })
-
 
 
     val countEditsByDate = userEditsByDate
