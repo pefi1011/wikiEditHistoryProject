@@ -62,8 +62,8 @@ object ProcessWikiData {
     val countsEditsPerUser = authors
       // Filter the anonymous users
       .filter(!_.startsWith("ip:"))
-      .filter(!_.startsWith("Bot"))
-      .filter(!_.startsWith("bot"))
+      .filter(!_.contains("Bot"))
+      .filter(!_.contains("bot"))
       .map(edit => (edit, 1)).groupBy(0)
       .reduce((t1, t2) => (t1._1, t1._2 + t2._2))
 
