@@ -105,7 +105,6 @@ object ProcessWikiData {
       .setParallelism(1)
       .first(20)
 
-    categories.writeAsText(outputFilePath + "/editFileFrequencyPart3", WriteMode.OVERWRITE)
 
     //////////////////////////////////////////// END CATEGORIES ///////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -128,7 +127,6 @@ object ProcessWikiData {
       .setParallelism(1)
       .first(20)
 
-    editsByDocId.writeAsText(outputFilePath + "/editFileFrequency", WriteMode.OVERWRITE)
 
 
 
@@ -143,8 +141,8 @@ object ProcessWikiData {
         (docName, categories)
       }
     })
-    .groupBy(0)
-    .reduce( (t1, t2) => (t1._1, (t1._2 ++ t2._2).distinct))
+      .groupBy(0)
+      .reduce( (t1, t2) => (t1._1, (t1._2 ++ t2._2).distinct))
 
     val catsOfFirst20Docs = docsWithCategories
       .joinWithTiny(editsByDocId)
@@ -157,6 +155,8 @@ object ProcessWikiData {
       .groupBy(0)
       .sum(1)
 
+    categories.writeAsText(outputFilePath + "/editFileFrequencyPart3", WriteMode.OVERWRITE)
+    editsByDocId.writeAsText(outputFilePath + "/editFileFrequency", WriteMode.OVERWRITE)
     countCatsOfTop20Docs.writeAsText(outputFilePath + "/editFileFrequencyPart2", WriteMode.OVERWRITE)
     //////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -167,7 +167,6 @@ object ProcessWikiData {
     ////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////// START TIMESTAMP PART /////////////////////////////////////
 
-    generateDataByDate(editsFirstLineNoAnonym)
 
     // TODO join with categories or just use data samehow
     val toJoin = categories
@@ -249,6 +248,12 @@ object ProcessWikiData {
       .map(t => (2015, t._1._1, t._1._2, t._1._3, t._1._4, t._1._5, t._1._6, t._1._7, t._2))
 
     outputCountPerUserGroupAndAvg.writeAsCsv(outputFilePath + "/editsUsersByDocCount", csvRowDelimeter, csvFieldDelimeter, WriteMode.OVERWRITE)
+
+    //////////////////////////////////////////////////////////////////////
+
+    generateDataByDate(editsFirstLineNoAnonym, top10Users)
+
+    //////////////////////////////////////////////////////////////////////
 
     env.execute("Scala AssociationRule Example")
   }
@@ -356,7 +361,7 @@ object ProcessWikiData {
     }
   }
 
-  def generateDataByDate(editsFirstLine: DataSet[String]) = {
+  def generateDataByDate(editsFirstLine: DataSet[String], top10User: DataSet[(String, Int)]) = {
 
     val userEditsByDate = editsFirstLine
       // get all edit timestamps
@@ -382,14 +387,17 @@ object ProcessWikiData {
 
     countEditsByDate.writeAsCsv(outputFilePath + "/userEditTimeCount", csvRowDelimeter, csvFieldDelimeter, WriteMode.OVERWRITE)
 
+
     val countEditsByUserDate = userEditsByDate
-      .groupBy(0, 1)
-      .reduce((t1, t2) => (t1._1, t1._2, t1._3 + t2._3))
+      .join(top10User)
+      .where(1)
+      .equalTo(0)
+      .map(_._1)
+      .groupBy(0,1)
+      .sum(2)
 
     countEditsByUserDate.writeAsCsv(outputFilePath + "/userEditTime", csvRowDelimeter, csvFieldDelimeter, WriteMode.OVERWRITE)
-
   }
-
 
 }
 
