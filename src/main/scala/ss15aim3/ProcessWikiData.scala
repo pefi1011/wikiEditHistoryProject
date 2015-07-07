@@ -142,6 +142,9 @@ object ProcessWikiData {
 
     generateDataByDate(editsFirstLineNoAnonym)
 
+    // TODO join with categories or just use data samehow
+    val toJoin = categories
+
      val editsByCategoryType = editsBadDataCleared.
        // get only data which contains "politic" in categories
        filter(_.split(newLine)(1).contains("politic"))
